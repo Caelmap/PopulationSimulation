@@ -1,10 +1,15 @@
+"""
+NOTE - This is not working at present.
+"""
+
 import dash
 from dash import html, dcc
 import numpy as np
 from dash.dependencies import Input, Output, State, ALL
 from dash import callback_context
-from scipy.spatial.distance import cdist
 from typing import List, Tuple
+
+import world
 
 WIDTH: float = 100
 HEIGHT: float = 100
@@ -12,7 +17,41 @@ INTERVAL: int = 64  # Milliseconds
 DEBUG = False
 
 
-def main_dash():
+def initialize_dash_app() -> dash.Dash:
+    # Create the Dash application
+    app = dash.Dash(__name__)
+
+    # Define the layout of the application
+    app.layout = html.Div(
+        [
+            html.Label("Initial number of Creatures:"),
+            dcc.Input(id="num-creatures-input", type="number", min=1, value=5),
+            html.Label("Initial number of Food:"),
+            dcc.Input(id="num-food-input", type="number", min=1, value=10),
+            html.Label("Food Growth Rate:"),
+            dcc.Input(id="num-growth-rate-input", type="number", min=0, value=0.5),
+            html.Button("Start", id="start-button", n_clicks=0),
+            html.Button("Stop", id="stop-button", n_clicks=0),
+            dcc.Interval(id="interval-component", interval=INTERVAL, n_intervals=0),
+            html.Div(id="frame-counter"),
+            html.Div(
+                id="map-container",
+                style={
+                    "backgroundColor": "white",
+                    "border": "1px solid black",
+                    "width": "100%",  # Twice as long
+                    "margin": "auto",  # Center the container
+                    "height": "600px",  # Set the height of the container
+                    "position": "relative",  # Enable positioning of elements inside the container
+                },
+            ),
+        ]
+    )
+
+    return app
+
+
+def main():
     # Create the Dash application
     app = initialize_dash_app()
 
@@ -57,8 +96,10 @@ def main_dash():
 
             if triggered_id == "start-button":
                 # Check if the start button was clicked
-                creature_positions = initialize_creatures(num_creatures, width, height)
-                food_positions = initialize_food(num_food, width, height)
+                creature_positions = world.initialize_creatures(
+                    num_creatures, width, height
+                )
+                food_positions = world.initialize_food(num_food, width, height)
                 play = True
 
                 # Reset the stop button click count
@@ -79,9 +120,9 @@ def main_dash():
 
         if play:
             # Update the positions based on simulation logic
-            creature_positions = update_positions(creature_positions)
-            food_positions = eat_food(food_positions, creature_positions)
-            food_positions = grow_food(food_positions, food_growth_rate)
+            creature_positions = world.update_positions(creature_positions)
+            food_positions = world.eat_food(food_positions, creature_positions)
+            food_positions = world.grow_food(food_positions, food_growth_rate)
 
             if DEBUG:
                 print("Playing!")
@@ -122,37 +163,3 @@ def main_dash():
 
     # Run the Dash application
     app.run_server(debug=True)
-
-
-def initialize_dash_app() -> dash.Dash:
-    # Create the Dash application
-    app = dash.Dash(__name__)
-
-    # Define the layout of the application
-    app.layout = html.Div(
-        [
-            html.Label("Initial number of Creatures:"),
-            dcc.Input(id="num-creatures-input", type="number", min=1, value=5),
-            html.Label("Initial number of Food:"),
-            dcc.Input(id="num-food-input", type="number", min=1, value=10),
-            html.Label("Food Growth Rate:"),
-            dcc.Input(id="num-growth-rate-input", type="number", min=0, value=0.5),
-            html.Button("Start", id="start-button", n_clicks=0),
-            html.Button("Stop", id="stop-button", n_clicks=0),
-            dcc.Interval(id="interval-component", interval=INTERVAL, n_intervals=0),
-            html.Div(id="frame-counter"),
-            html.Div(
-                id="map-container",
-                style={
-                    "backgroundColor": "white",
-                    "border": "1px solid black",
-                    "width": "100%",  # Twice as long
-                    "margin": "auto",  # Center the container
-                    "height": "600px",  # Set the height of the container
-                    "position": "relative",  # Enable positioning of elements inside the container
-                },
-            ),
-        ]
-    )
-
-    return app
