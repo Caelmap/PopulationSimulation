@@ -2,4 +2,8 @@
 
 Aim to create simulations of populations of species
 
-However it is more for the creator to learn how to use some new tech - so if you stumbled here accidentally, don't get too excited...
+Uses poetry for package management.
+
+Running main launches a simulation, where red creatures eat green food.
+
+The food growth rate, intial creatures and initial food can be set before launching
