@@ -42,6 +42,10 @@ class World(ABC):
     def eat_food(self):
         pass
 
+    @abstractmethod
+    def creatures_die_or_reproduce(self):
+        pass
+
 
 class SimpleWorld(World):
     def __init__(
@@ -56,7 +60,6 @@ class SimpleWorld(World):
         num_creatures: int,
         width: float,
         height: float,
-        reach: float,
         creature_type: str = "Simple",
         brain_type: str = "SimpleRandom",
     ) -> None:
@@ -70,7 +73,6 @@ class SimpleWorld(World):
                     width=width,
                     height=height,
                     brain_type=brain_type,
-                    reach=reach,
                 )
 
             # Other cases
@@ -211,5 +213,41 @@ class SimpleWorld(World):
             self.foods = [
                 food for (food, remove) in zip(self.foods, remove_indexes) if remove
             ]
+
+        return None
+
+    def creatures_die_or_reproduce(self):
+        # Creatures with no energy become food
+        creatures_to_be_food = [
+            creature for creature in self.creatures if creature.energy <= 0
+        ]
+        for creature in creatures_to_be_food:
+            dead_colour = tuple(max(0, x - 0.3) for x in creature.colour)
+            self.foods.append(
+                food.DeadCreature(
+                    position=creature.position,
+                    energy=creature.initialEnergy / 2,
+                    colour=dead_colour,
+                    size=creature.size,
+                )
+            )
+
+        # Remove creatures that have no energy
+        self.creatures = [
+            creature for creature in self.creatures if creature.energy > 0
+        ]
+
+        removeCreature = []
+        # Reproduce creatures that have enough energy
+        for creature in self.creatures:
+            if creature.energy >= creature.reproduction_threshold:
+                offspring1, offsprint2 = creature.reproduce(creature, self.max_movement)
+                self.creatures.append(offspring1)
+                self.creatures.append(offsprint2)
+                removeCreature.append(creature)
+
+        self.creatures = [
+            creature for creature in self.creatures if creature not in removeCreature
+        ]
 
         return None

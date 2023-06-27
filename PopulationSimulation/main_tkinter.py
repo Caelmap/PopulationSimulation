@@ -20,9 +20,7 @@ FOOD_TYPE = "Grass"  # Only Grass is supported for now
 
 MAX_MOVEMENT = 10  # Maximum distance a creature can move in one step
 
-CREATURE_RATIO = 25  # Scale of creature
-FOOD_RATIO = 4  # Scale of food
-REACH: float = math.sqrt(CREATURE_RATIO) + math.sqrt(FOOD_RATIO)  # Reach of creature
+VISUAL_RATIO = 1  # Increase visual size of creatures / food
 
 
 # Global variables
@@ -56,7 +54,6 @@ def start_simulation(
         num_creatures=num_creatures,
         width=WIDTH,
         height=HEIGHT,
-        reach=REACH,
         creature_type=CREATURE_TYPE,
         brain_type=BRAIN_TYPE,
     )
@@ -64,6 +61,12 @@ def start_simulation(
         num_food=num_food, width=WIDTH, height=HEIGHT, food_type=FOOD_TYPE
     )
     play = True
+
+    # Create a display of the current creature and food count
+    creature_count = tk.Label(window, text=f"Creatures: {len(worldInstance.creatures)}")
+    creature_count.pack()
+    food_count = tk.Label(window, text=f"Food: {len(worldInstance.foods)}")
+    food_count.pack()
 
     # Create a canvas to draw the simulation
     canvas = tk.Canvas(
@@ -82,28 +85,43 @@ def start_simulation(
         # Draw creatures
         for creature in worldInstance.creatures:
             x, y = creature.position
-            size = creature.size * CREATURE_RATIO
-            radius = math.sqrt(size / math.pi)
+            size = creature.size * VISUAL_RATIO
             colour = creature.colour
             hex_colour = matplotlib.colors.to_hex(colour)
-            canvas.create_oval(
-                x - radius, y - radius, x + radius, y + radius, fill=hex_colour
-            )  # Draw the creature
+            match creature.shape:
+                case "circle":
+                    radius = math.sqrt(size / math.pi)
+                    canvas.create_oval(
+                        x - radius, y - radius, x + radius, y + radius, fill=hex_colour
+                    )  # Draw the creature
+                case _:
+                    raise ValueError(f"Invalid creature shape: {creature.shape}")
 
         # Draw food
         for food in worldInstance.foods:
             x, y = food.position
-            size = food.size * FOOD_RATIO
+            size = food.size * VISUAL_RATIO
             colour = food.colour
             hex_colour = matplotlib.colors.to_hex(colour)
-            food_length = math.sqrt(size)
-            canvas.create_rectangle(
-                x - food_length / 2,
-                y - food_length / 2,
-                x + food_length / 2,
-                y + food_length / 2,
-                fill=hex_colour,
-            )  # Draw the food
+            match food.shape:
+                case "circle":
+                    radius = math.sqrt(size / math.pi)
+                    canvas.create_oval(
+                        x - radius, y - radius, x + radius, y + radius, fill=hex_colour
+                    )  # Draw the food
+                case "square":
+                    food_length = math.sqrt(size)
+                    canvas.create_rectangle(
+                        x - food_length / 2,
+                        y - food_length / 2,
+                        x + food_length / 2,
+                        y + food_length / 2,
+                        fill=hex_colour,
+                    )  # Draw the food
+
+        # Update the creature and food count
+        creature_count.config(text=f"Creatures: {len(worldInstance.creatures)}")
+        food_count.config(text=f"Food: {len(worldInstance.foods)}")
 
         # Break the loop if the stop button is pressed
         if not play:
@@ -120,6 +138,7 @@ def update_simulation(worldInstance: world.World):
     if play:
         worldInstance.update_positions()
         worldInstance.eat_food()
+        worldInstance.creatures_die_or_reproduce()
         worldInstance.grow_food()
 
 

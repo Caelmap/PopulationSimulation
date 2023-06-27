@@ -14,20 +14,22 @@ class Food(ABC):
         self,
         position: tuple[float, float],
         energy: float,
-        colour: tuple[int, int, int],
+        colour: tuple[float, float, float],
         size: float,
+        shape: str,
     ):
         self.position = position
         self.energy = energy
         self.colour = colour
         self.size = size
+        self.shape = shape
 
 
 class Grass(Food):
     """ """
 
     def __init__(self, position: tuple[float, float]):
-        super().__init__(position, 20, (0, 1, 0), 1)
+        super().__init__(position, 20, (0, 1, 0), 4, "square")
 
     @staticmethod
     def generate_random_food(num_food: int, width: float, height: float) -> list[Food]:
@@ -43,3 +45,14 @@ class Grass(Food):
                 )
             )
         return foods
+
+
+class DeadCreature(Food):
+    def __init__(
+        self,
+        position: tuple[float, float],
+        energy: float,
+        colour: tuple[float, float, float],
+        size: float,
+    ):
+        super().__init__(position, energy, colour, size, "circle")
